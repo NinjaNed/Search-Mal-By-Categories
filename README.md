@@ -1,4 +1,4 @@
-# Search-Mal-By-Source
+# Search-Mal-By-Categories
 
 This project was intended to provide a list of animes that are sourced from lesser used mediums than the normal manga visual novel route. Animes that are sourced from Radio, or Card Games might be hard to find for users who don't of them beforehand. MAL doesn't have a good way to search by source, so this project was created to do that for them. 
 
