@@ -7,7 +7,7 @@ import urllib.error
 # the future.
 def find_highest_mal_url_index():
     base_url = "https://myanimelist.net/anime/"
-    for i in range(40000):
+    for i in range(45000):
         try:
             index = 40000-i
             print("i = " + str(index))

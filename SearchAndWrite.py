@@ -1,7 +1,7 @@
-﻿import urllib.request
+import urllib.request
 import urllib.error
 import os
-import errno
+import time
 
 base_url = 'https://myanimelist.net/anime/'
 
@@ -19,6 +19,10 @@ score_token_start = '"ratingValue">'
 alt_score_start = 'Score:</span>\\n  <span>'
 score_token_end = '</span>'
 
+# Date Tokens
+date_token_start = 'Aired:</span>\\n  '
+date_token_end = '\\n'
+
 # Number of Episode Tokens
 num_ep_token_start = 'Episodes:</span>\\n  '
 num_ep_token_end = '\\n'
@@ -30,6 +34,7 @@ duration_token_end = '\\n'
 # Genres Tokens
 genres_token_start = '("genres", ['
 genres_token_end = ']'
+
 
 # Anime Titles sometimes use ridiculous symbols ¯\_(ツ)_/¯
 UTF8_mappings = {
@@ -63,27 +68,24 @@ def page_finder(page_str, token_start, token_end):
 
 
 # Where to store the txt files of the logged information
-SOURCES_PATH = './Anime By Sources'
+SOURCE_PATH = './Anime By Source'
+MONTH_PATH = './Anime By Month'
+DAY_PATH = './Anime By Day'
 
 
 # Takes a range of indexes to check over the MAL DB, reads the webpage, scans for important data, and writes to disk
 # based on type of source material.
 def search_and_write(start_index, end_index=-1):
+    # only one index implies search is from 1 - index
     if end_index == -1:
         end_index = start_index
         start_index = 0
-
-    # Create the folder for for text files to go into if it doesn't exist already
-    try:
-        os.makedirs(SOURCES_PATH)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
 
     # For each page that exists. Find the relevant data and store that in the text file corresponding to the source and
     # connect each one with a === for easy splitting and filtering after all the data is logged.
     for i in range(start_index, end_index):
         try:
+            time.sleep(.2)
             url = base_url + str(i)
             web_page = urllib.request.urlopen(url)
             page_xml = str(web_page.read())
@@ -96,25 +98,49 @@ def search_and_write(start_index, end_index=-1):
             else:
                 score = page_finder(page_xml, score_token_start, score_token_end)
             num_eps = page_finder(page_xml, num_ep_token_start, num_ep_token_end)
-            ep_len = page_finder(page_xml, duration_token_start, duration_token_end)
+            duration = page_finder(page_xml, duration_token_start, duration_token_end)
             genres = page_finder(page_xml, genres_token_start, genres_token_end)
+
+            # finding the right date data takes some filtering to hit all the possible formats
+            date = page_finder(page_xml, date_token_start, date_token_end)
+            if date.find(' to ') != -1:
+                date = date.split(' to ')[0]  # ignore the ending date
+            date = date.replace(',', '')  # take out the comma so we can split by spaces
+            date_items = date.split(' ')  # token possibilities are Month Day Year, Month Year, Year, Or Unknown
+            month = 'Unknown'
+            day = 'Unknown'
+            year = 'Unknown'
+            if len(date_items) == 3:
+                month = date_items[0]
+                day = date_items[1]
+                year = date_items[2]
+            elif len(date_items) == 2:
+                if date_items[0] != 'Not':  # skip "Not Available"
+                    month = date_items[0]
+                    year = date_items[1]
+            elif len(date_items) == 1 and date_items[0] != 'Unknown':
+                year = date_items[0]
 
             # Print a small snippet of info so the user knows that the program is still running.
             print('Index: ' + str(i) + ' - ' + filter_title(title) + ' - ' + source)
 
-            # If the file we want to write to exists, then we just want to append new data.
-            # If not, then we want to create a new file to write to.
-            if os.path.exists(os.path.join(SOURCES_PATH, source + '.txt')):
-                append_write = 'a'  # append if already exists
-            else:
-                append_write = 'w'  # make a new file if not
-
             # Write the data, but make sure to encode using 'utf-8' otherwise special characters are represented as more
             # than one space. (e.g ä will be taken as 2 spaces since it's base value is \xc3\xa4.
-            with open(os.path.join(SOURCES_PATH, source + '.txt'), append_write, encoding='utf-8') as source_file:
-                source_file.write(filter_title(title) + '===' + score + '===' + num_eps + ' episode(s)' + '===' +
-                                  ep_len + '===' + genres.replace('"', '') + '===' + url + '\n')
 
+            source_file = open(os.path.join(SOURCE_PATH, source + '.txt'), 'a+', encoding='utf-8')
+            source_file.write('==='.join([filter_title(title), score, year, num_eps + ' episode(s)', duration,
+                                          genres.replace('"', ''), url]) + '\n')
+            source_file.close()
+
+            month_file = open(os.path.join(MONTH_PATH, month + '.txt'), 'a+', encoding='utf-8')
+            month_file.write('==='.join([filter_title(title), score, year, num_eps + ' episode(s)', duration,
+                                         genres.replace('"', ''), url]) + '\n')
+            month_file.close()
+
+            day_file = open(os.path.join(DAY_PATH, day + '.txt'), 'a+', encoding='utf-8')
+            day_file.write('==='.join([filter_title(title), score, year, num_eps + ' episode(s)', duration,
+                                       genres.replace('"', ''), url]) + '\n')
+            day_file.close()
         except urllib.error.HTTPError:
             pass
         except urllib.error.URLError:
