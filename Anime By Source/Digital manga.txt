@@ -1,6 +1,9 @@
-Title                                        - Score - Year - Num Eps       - Duration       - Genre(s)                      - Link
-Ame-iro Cocoa Series: Ame-con!!              - 4.87  - 2017 - 12 episode(s) - 2 min. per ep. - Slice of Life, Comedy         - https://myanimelist.net/anime/35923
-Ame-iro Cocoa: Rainy Color e Youkoso!        - 4.88  - 2015 - 12 episode(s) - 2 min. per ep. - Comedy, Slice of Life         - https://myanimelist.net/anime/31139
-Ame-iro Cocoa                                - 4.78  - 2015 - 12 episode(s) - 2 min. per ep. - Comedy, Slice of Life         - https://myanimelist.net/anime/28981
-Omiai Aite wa Oshiego, Tsuyoki na, Mondaiji. - 5.55  - 2017 - 12 episode(s) - 4 min. per ep. - Ecchi, Romance, School, Josei - https://myanimelist.net/anime/36198
-Oshiete! Galko-chan OVA                      - 7.19  - 2017 - 1 episode(s)  - 28 min.        - Slice of Life, Comedy         - https://myanimelist.net/anime/33949
+Title                                                                      - Score - Year - Num Eps            - Duration       - Genre(s)                      - Link
+Ame-iro Cocoa Series: Ame-con!!                                            - 4.88  - 2017 - 12 episode(s)      - 2 min. per ep. - Slice of Life, Comedy         - https://myanimelist.net/anime/35923
+Ame-iro Cocoa in Hawaii                                                    - 4.80  - 2016 - 12 episode(s)      - 2 min. per ep. - Comedy, Slice of Life         - https://myanimelist.net/anime/33245
+Ame-iro Cocoa: Rainy Color e Youkoso!                                      - 4.88  - 2015 - 12 episode(s)      - 2 min. per ep. - Comedy, Slice of Life         - https://myanimelist.net/anime/31139
+Ame-iro Cocoa                                                              - 4.78  - 2015 - 12 episode(s)      - 2 min. per ep. - Comedy, Slice of Life         - https://myanimelist.net/anime/28981
+Katainaka ni Totsuidekita \xe2\x97\x8b-ssia Musume to H Shimakuru Ohanashi - 7.10  - 2017 - Unknown episode(s) - 18 min.        - Hentai                        - https://myanimelist.net/anime/36256
+Omiai Aite wa Oshiego, Tsuyoki na, Mondaiji.                               - 5.57  - 2017 - 12 episode(s)      - 4 min. per ep. - Romance, Ecchi, School        - https://myanimelist.net/anime/36198
+Oshiete! Galko-chan OVA                                                    - 7.20  - 2017 - 1 episode(s)       - 28 min.        - Slice of Life, Comedy         - https://myanimelist.net/anime/33949
+Oshiete! Galko-chan                                                        - 7.19  - 2016 - 12 episode(s)      - 7 min. per ep. - Slice of Life, Comedy, School - https://myanimelist.net/anime/32013
