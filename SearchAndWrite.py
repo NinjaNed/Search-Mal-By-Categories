@@ -1,55 +1,26 @@
 import urllib.request
 import urllib.error
 import os
+import json
 import time
 
-base_url = 'https://myanimelist.net/anime/'
-
-# Title Name Tokens
-title_token_start = '<span itemprop="name">'
-title_token_end = '</span>'
-
-# Source Tokens
-source_type_set = set()
-source_token_start = 'Source:</span>\\n  '
-source_token_end = '\\n'
-
-# Score Tokens
-score_token_start = '"ratingValue">'
-alt_score_start = 'Score:</span>\\n  <span>'
-score_token_end = '</span>'
-
-# Date Tokens
-date_token_start = 'Aired:</span>\\n  '
-date_token_end = '\\n'
-
-# Number of Episode Tokens
-num_ep_token_start = 'Episodes:</span>\\n  '
-num_ep_token_end = '\\n'
-
-# Duration Tokens
-duration_token_start = 'Duration:</span>\\n  '
-duration_token_end = '\\n'
-
-# Genres Tokens
-genres_token_start = '("genres", ['
-genres_token_end = ']'
-
+jikan_base_url = 'https://api.jikan.moe/v3/anime/'
+mal_base_url = 'https://myanimelist.net/anime/'
 
 # Anime Titles sometimes use ridiculous symbols ¯\_(ツ)_/¯
 UTF8_mappings = {
-    '\\\'': '\'', '\\xc2\\xae': '®', '\\xc2\\xb0': '°', '\\xc2\\xb2': '²', '\\xc2\\xb3': '³', '\\xc2\\xbd': '½',
-    '\\xc3\\x84': 'Ä', '\\xc3\\x89': 'É', '\\xc3\\x97': '×', '\\xc3\\x9c': 'Ü', '\\xc3\\xa0': 'à', '\\xc3\\xa2': 'â',
-    '\\xc3\\xa8': 'è', '\\xc3\\xa4': 'ä', '\\xc3\\xa9': 'é', '\\xc3\\xb6': 'ö', '\\xc3\\xb9': 'ù', '\\xc3\\xbc': 'ü',
-    '\\xc3\\x9f': 'ß', '\\xc4\\x83': 'ă', '\\xc4\\x93': 'ē', '\\xc5\\x8d': 'ō', '\\xc5\\x92': 'Œ', '\\xc5\\xa1': 'š',
-    '\\xce\\x94': 'Δ', '\\xce\\xa8': 'Ψ', '\\xce\\xbc': 'μ', '\\xcf\\x87': 'χ', '\\xe2\\x80\\x8b': '',
-    '\\xe2\\x80\\x94': '—', '\\xe2\\x80\\x99': '’', '\\xe2\\x80\\x9c': '“', '\\xe2\\x80\\x9d': '”',
-    '\\xe2\\x80\\xa0': '†', '\\xe2\\x84\\x83': '℃', '\\xe2\\x86\\x90': '←', '\\xe2\\x86\\x91': '↑',
-    '\\xe2\\x86\\x92': '→', '\\xe2\\x88\\x9e': '∞', '\\xe2\\x89\\xa0': '≠', '\\xe2\\x90\\xa3': '␣',
-    '\\xe2\\x96\\xb3': '△ ', '\\xe2\\x97\\xaf': '◯', '\\xe2\\x98\\x86': '☆', '\\xe2\\x98\\x85': '★',
-    '\\xe2\\x99\\xa1': '♡', '\\xe2\\x99\\xa5': '♥', '\\xe2\\x99\\xaa': '♪', '\\xe2\\x99\\x80': '♀',
-    '\\xe2\\x99\\x82': '♂', '\\xe2\\x99\\xad': '♭', '\\xe2\\xa4\\xb4': '⤴', '\\xe3\\x83\\xbb': '・',
-    '\\xef\\xbc\\x8a': '＊', '\\xef\\xbf\\xa5': '￥',
+    '\\\'': '\'', '&quot;': '\"', '\\xc2\\xae': '®', '\\xc2\\xb0': '°', '\\xc2\\xb2': '²', '\\xc2\\xb3': '³',
+    '\\xc2\\xbd': '½', '\\xc3\\x84': 'Ä', '\\xc3\\x89': 'É', '\\xc3\\x97': '×', '\\xc3\\x9c': 'Ü', '\\xc3\\xa0': 'à',
+    '\\xc3\\xa2': 'â', '\\xc3\\xa8': 'è', '\\xc3\\xa4': 'ä', '\\xc3\\xa9': 'é', '\\xc3\\xb6': 'ö', '\\xc3\\xb9': 'ù',
+    '\\xc3\\xbc': 'ü', '\\xc3\\x9f': 'ß', '\\xc4\\x83': 'ă', '\\xc4\\x93': 'ē', '\\xc5\\x8d': 'ō', '\\xc5\\x92': 'Œ',
+    '\\xc5\\xa1': 'š', '\\xce\\x94': 'Δ', '\\xce\\xa8': 'Ψ', '\\xce\\xbc': 'μ', '\\xcf\\x87': 'χ',
+    '\\xe2\\x80\\x8b': '', '\\xe2\\x80\\x94': '—', '\\xe2\\x80\\x99': '’', '\\xe2\\x80\\x9c': '“',
+    '\\xe2\\x80\\x9d': '”', '\\xe2\\x80\\xa0': '†', '\\xe2\\x84\\x83': '℃', '\\xe2\\x86\\x90': '←',
+    '\\xe2\\x86\\x91': '↑', '\\xe2\\x86\\x92': '→', '\\xe2\\x88\\x9e': '∞', '\\xe2\\x89\\xa0': '≠',
+    '\\xe2\\x90\\xa3': '␣', '\\xe2\\x96\\xb3': '△ ', '\\xe2\\x97\\xaf': '◯', '\\xe2\\x98\\x86': '☆',
+    '\\xe2\\x98\\x85': '★', '\\xe2\\x99\\xa1': '♡', '\\xe2\\x99\\xa5': '♥', '\\xe2\\x99\\xaa': '♪',
+    '\\xe2\\x99\\x80': '♀', '\\xe2\\x99\\x82': '♂', '\\xe2\\x99\\xad': '♭', '\\xe2\\xa4\\xb4': '⤴',
+    '\\xe3\\x83\\xbb': '・', '\\xef\\xbc\\x8a': '＊', '\\xef\\xbf\\xa5': '￥', '&#039;': '\'', '&amp;': '&',
 }
 
 
@@ -68,41 +39,64 @@ def page_finder(page_str, token_start, token_end):
 
 
 # Where to store the txt files of the logged information
-SOURCE_PATH = './Anime By Source'
-MONTH_PATH = './Anime By Month'
-DAY_PATH = './Anime By Day'
+SOURCE_PATH = os.path.join('.', 'Anime By Source')
+MONTH_PATH = os.path.join('.', 'Anime By Month')
+DAY_PATH = os.path.join('.', 'Anime By Day')
 
 
 # Takes a range of indexes to check over the MAL DB, reads the webpage, scans for important data, and writes to disk
 # based on type of source material.
-def search_and_write(start_index, end_index=-1):
-    # only one index implies search is from 1 - index
-    if end_index == -1:
-        end_index = start_index
-        start_index = 0
+def search_and_write(list_indexes, no_hit_file):
+
+    did_work = False
 
     # For each page that exists. Find the relevant data and store that in the text file corresponding to the source and
     # connect each one with a === for easy splitting and filtering after all the data is logged.
-    for i in range(start_index, end_index):
+    for i in list_indexes:
         try:
-            time.sleep(.2)
-            url = base_url + str(i)
-            web_page = urllib.request.urlopen(url)
-            page_xml = str(web_page.read())
+            # time.sleep(1)  # might need to throttle this
 
-            title = page_finder(page_xml, title_token_start, title_token_end)
-            source = page_finder(page_xml, source_token_start, source_token_end)
-            # for some reason MAL has two ways to represent score on their pages
-            if page_xml.find(score_token_start) == -1:
-                score = page_finder(page_xml, alt_score_start, score_token_end)
+            jikan_url = jikan_base_url + str(i)
+            mal_url = mal_base_url + str(i)
+
+            with urllib.request.urlopen(jikan_url) as url:
+                data = json.loads(url.read().decode())
+
+            title = data['title']
+
+            source = data['source']
+
+            score = str(data['score'])
+            len_score = len(score)
+            if len_score == 1:
+                score += '.00'
+            elif len_score == 3:
+                score += '0'
+            elif len_score == 'None':
+                score = 'N/A'
+            elif len_score > 4:
+                score = score[:4]
+
+            duration = data['duration']
+
+            num_eps_int = data['episodes']
+            if num_eps_int:
+                num_eps = str(num_eps_int) + ' episode'
+                if num_eps_int > 1:
+                    num_eps += 's'
             else:
-                score = page_finder(page_xml, score_token_start, score_token_end)
-            num_eps = page_finder(page_xml, num_ep_token_start, num_ep_token_end)
-            duration = page_finder(page_xml, duration_token_start, duration_token_end)
-            genres = page_finder(page_xml, genres_token_start, genres_token_end)
+                num_eps = 'Ongoing'
+
+            genres = ''
+            for genre in data['genres']:
+                genre_name = genre['name']
+                if genres:
+                    genres += ', %s' % genre_name
+                else:
+                    genres += genre_name
 
             # finding the right date data takes some filtering to hit all the possible formats
-            date = page_finder(page_xml, date_token_start, date_token_end)
+            date = data['aired']['string']
             if date.find(' to ') != -1:
                 date = date.split(' to ')[0]  # ignore the ending date
             date = date.replace(',', '')  # take out the comma so we can split by spaces
@@ -127,21 +121,27 @@ def search_and_write(start_index, end_index=-1):
             # Write the data, but make sure to encode using 'utf-8' otherwise special characters are represented as more
             # than one space. (e.g ä will be taken as 2 spaces since it's base value is \xc3\xa4.
 
-            source_file = open(os.path.join(SOURCE_PATH, source + '.txt'), 'a+', encoding='utf-8')
-            source_file.write('==='.join([filter_title(title), score, year, num_eps + ' episode(s)', duration,
-                                          genres.replace('"', ''), url]) + '\n')
-            source_file.close()
+            with open(os.path.join(SOURCE_PATH, source + '.temp'), 'a+', encoding='utf-8') as source_file:
+                source_file.write('==='.join([filter_title(title), score, year, num_eps, duration,
+                                              genres.replace('"', ''), mal_url]) + '\n')
 
-            month_file = open(os.path.join(MONTH_PATH, month + '.txt'), 'a+', encoding='utf-8')
-            month_file.write('==='.join([filter_title(title), score, year, num_eps + ' episode(s)', duration,
-                                         genres.replace('"', ''), url]) + '\n')
-            month_file.close()
+            with open(os.path.join(MONTH_PATH, month + '.temp'), 'a+', encoding='utf-8') as month_file:
+                month_file.write('==='.join([filter_title(title), score, year, num_eps, duration,
+                                             genres.replace('"', ''), mal_url]) + '\n')
 
-            day_file = open(os.path.join(DAY_PATH, day + '.txt'), 'a+', encoding='utf-8')
-            day_file.write('==='.join([filter_title(title), score, year, num_eps + ' episode(s)', duration,
-                                       genres.replace('"', ''), url]) + '\n')
-            day_file.close()
-        except urllib.error.HTTPError:
-            pass
+            with open(os.path.join(DAY_PATH, day + '.temp'), 'a+', encoding='utf-8') as day_file:
+                day_file.write('==='.join([filter_title(title), score, year, num_eps, duration,
+                                           genres.replace('"', ''), mal_url]) + '\n')
+
+            did_work = True
+
+        except urllib.error.HTTPError as e:
+            error_name = str(e)
+            error_message = str(i) + ' - ' + error_name.replace('HTTP Error ', '')
+            with open(no_hit_file, 'a+') as empty_urls:
+                empty_urls.write(error_message + '\n')
+            print('Index:', error_message)
+            did_work = True
         except urllib.error.URLError:
             pass
+    return did_work
