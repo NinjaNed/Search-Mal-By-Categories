@@ -63,7 +63,7 @@ def log_anime_from_mal():
             with os.scandir(path) as entries:
                 for entry in entries:
                     if entry.is_file() and '.temp' in entry.name:
-                        final_file_name = entry.name.replace('.temp', '.text')
+                        final_file_name = entry.name.replace('.temp', '.txt')
 
                         with open(os.path.join(path, entry.name), encoding='utf-8') as temp_file:
                             lines = [line.strip() for line in temp_file.readlines()]
