@@ -162,7 +162,7 @@ def log_anime_from_mal():
 
         os.remove(EMPTY_URL_LOG_TEMP)
     else:
-        print('No indexes to search. You may publish now.')
+        print('No indexes to search. Your files are up to date!')
 
 
 if __name__ == '__main__':
