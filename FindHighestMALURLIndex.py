@@ -21,5 +21,5 @@ def find_highest_mal_url_index():
             pass
 
 
-if '__name__' == '__main__':
+if __name__ == '__main__':
     find_highest_mal_url_index()

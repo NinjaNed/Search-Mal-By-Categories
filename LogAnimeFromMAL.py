@@ -53,7 +53,11 @@ def log_anime_from_mal():
 
     # Do the actual work of pulling
     #  info from web and logging it.
-    did_work = search_and_write(get_relevant_indexes(), EMPTY_URL_LOG_TEMP)
+    try:
+        did_work = search_and_write(get_relevant_indexes(), EMPTY_URL_LOG_TEMP)
+    except:
+        # if failed for some reason just proceed like you finished.
+        did_work = True
 
     if did_work:
         # Filter and present the data to the viewer in a nicer fashion by finding the largest size of sections that have
