@@ -7,9 +7,9 @@ import urllib.error
 # the future.
 def find_highest_mal_url_index():
     base_url = "https://myanimelist.net/anime/"
-    for i in range(45000):
+    for i in range(47000):
         try:
-            index = 40000-i
+            index = 47000-i
             print("i = " + str(index))
             urllib.request.urlopen(base_url + str(index))
             print("LAST MAL INDEX = " + str(index))
