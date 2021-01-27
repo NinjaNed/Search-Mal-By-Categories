@@ -8,4 +8,4 @@ MAL will time you out (with a "Too many requests" message) if you try to do too 
 
 But I hope the lists can help the you out. 
 
-List Updated as of April 6th 2019
+List Updated as of Jan 27th 2021
