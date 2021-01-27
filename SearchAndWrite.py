@@ -2,7 +2,6 @@ import urllib.request
 import urllib.error
 import os
 import json
-import time
 
 jikan_base_url = 'https://api.jikan.moe/v3/anime/'
 mal_base_url = 'https://myanimelist.net/anime/'
@@ -46,7 +45,7 @@ DAY_PATH = os.path.join('.', 'Anime By Day')
 
 # Takes a range of indexes to check over the MAL DB, reads the webpage, scans for important data, and writes to disk
 # based on type of source material.
-def search_and_write(list_indexes, no_hit_file):
+def search_and_write(list_indexes, index_list):
 
     did_work = False
 
@@ -54,7 +53,6 @@ def search_and_write(list_indexes, no_hit_file):
     # connect each one with a === for easy splitting and filtering after all the data is logged.
     for i in list_indexes:
         try:
-            # time.sleep(1)  # might need to throttle this
 
             jikan_url = jikan_base_url + str(i)
             mal_url = mal_base_url + str(i)
@@ -133,12 +131,14 @@ def search_and_write(list_indexes, no_hit_file):
                 day_file.write('==='.join([filter_title(title), score, year, num_eps, duration,
                                            genres.replace('"', ''), mal_url]) + '\n')
 
+            with open(index_list, 'a+') as empty_urls:
+                empty_urls.write(str(i) + ' - 200: OK\n')
             did_work = True
 
         except urllib.error.HTTPError as e:
             error_name = str(e)
             error_message = str(i) + ' - ' + error_name.replace('HTTP Error ', '')
-            with open(no_hit_file, 'a+') as empty_urls:
+            with open(index_list, 'a+') as empty_urls:
                 empty_urls.write(error_message + '\n')
             print('Index:', error_message)
             did_work = True

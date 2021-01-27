@@ -1,27 +1,32 @@
 # Collects anime data from individual MAL Pages and sorts them into files based on Source, Month, and Date of release.
 
-import os
+from collections import OrderedDict
 import errno
+import os
+import shutil
+import sys
+import time
+
 from SearchAndWrite import search_and_write
 
 SOURCE_PATH = os.path.join('.', 'Anime By Source')
 MONTH_PATH = os.path.join('.', 'Anime By Month')
 DAY_PATH = os.path.join('.', 'Anime By Day')
 path_list = [SOURCE_PATH, MONTH_PATH, DAY_PATH]
-MAX_URL_INDEX = 40000
+MAX_URL_INDEX = 46704
 # MAX_URL_INDEX = 200  # for testing
 
-EMPTY_URL_LOG_TEMP = 'empty_mal_urls.temp'
-EMPTY_URL_LOG = 'empty_mal_urls.txt'
+INDEX_LIST_TEMP = 'index_list.temp'
+INDEX_LIST = 'index_list.txt'
 
 
 def get_relevant_indexes():
-    if os.path.isfile(EMPTY_URL_LOG):
+    if os.path.isfile(INDEX_LIST):
         indexes_to_search = []
-        with open(EMPTY_URL_LOG) as no_hit_file:
+        with open(INDEX_LIST) as no_hit_file:
             indexes = no_hit_file.readlines()
         for line in indexes:
-            if line.strip() and '404:' not in line:
+            if line.strip() and '404:' not in line and '200:' not in line:
                 indexes_to_search.append(line.split()[0])
 
         last_index = int(indexes[-1].split()[0])
@@ -44,17 +49,16 @@ def log_anime_from_mal():
             if e.errno != errno.EEXIST:
                 raise
 
-    # Wipe the folder of files we want to write to
+    # Wipe .temp files from the folder we want to write to
     for path in path_list:
         with os.scandir(path) as entries:
             for entry in entries:
                 if (entry.is_file() and '.temp' in entry.name) or entry.is_symlink():
                     os.remove(entry.path)
 
-    # Do the actual work of pulling
-    #  info from web and logging it.
+    # Do the actual work of pulling info from web and logging it.
     try:
-        did_work = search_and_write(get_relevant_indexes(), EMPTY_URL_LOG_TEMP)
+        did_work = search_and_write(get_relevant_indexes(), INDEX_LIST_TEMP)
     except:
         # if failed for some reason just proceed like you finished.
         did_work = True
@@ -99,14 +103,20 @@ def log_anime_from_mal():
                         except FileNotFoundError:
                             pass  # no old file to append to currently found lines
 
-                        lines.sort()  # sort alphabetically
+                        # get rid of duplicate lines if they exist
+                        new_lines = []
+                        for line in lines:
+                            if line not in new_lines:
+                                new_lines.append(line)
+
+                        new_lines.sort()  # sort alphabetically
 
                         max_title = 0
                         max_year = 0
                         max_ep = 0
                         max_duration = 0
                         max_genre = 0
-                        for line in lines:
+                        for line in new_lines:
                             line_tokens = line.split('===')
                             max_title = max(max_title, len(line_tokens[0]))
                             max_year = max(max_year, len(line_tokens[2]))
@@ -114,56 +124,93 @@ def log_anime_from_mal():
                             max_duration = max(max_duration, len(line_tokens[4]))
                             max_genre = max(max_genre, len(line_tokens[5]))
 
-                        for i in range(len(lines)):
-                            line_tokens = lines[i].split('===')
+                        for i in range(len(new_lines)):
+                            line_tokens = new_lines[i].split('===')
                             line_tokens[0] = line_tokens[0].ljust(max_title)
                             line_tokens[1] = line_tokens[1].ljust(5)  # 'Score' has len=5 while scores have len=4
                             line_tokens[2] = line_tokens[2].ljust(max_year)
                             line_tokens[3] = line_tokens[3].ljust(max_ep)
                             line_tokens[4] = line_tokens[4].ljust(max_duration)
                             line_tokens[5] = line_tokens[5].ljust(max_genre)
-                            lines[i] = ' - '.join(line_tokens) + '\n'
+                            new_lines[i] = ' - '.join(line_tokens) + '\n'
 
                         with open(os.path.join(path, final_file_name), 'w', encoding='utf-8') as main_file:
                             main_file.write(' - '.join(['Title'.ljust(max_title), 'Score', 'Year'.ljust(max_year),
                                                         'Num Eps'.ljust(max_ep), 'Duration'.ljust(max_duration),
                                                         'Genre(s)'.ljust(max_genre), 'Link']) + '\n\n')
-                            main_file.writelines(lines)
+                            main_file.writelines(new_lines)
 
-                        os.remove(entry.path)
+                        os.remove(entry.path)  # remove .temp file after parsing
 
-        empty_index_lines_dict = {}
+        index_results = OrderedDict()
         # bring in old empty url log info that we know doesn't have any anime info
         try:
-            with open(EMPTY_URL_LOG) as no_hit_file:
+            with open(INDEX_LIST) as no_hit_file:
                 lines = no_hit_file.readlines()
                 for line in lines:
-                    if '404:' in line:
-                        empty_index_lines_dict[line] = None
+                    index, result = line.split('-')
+                    index_results[int(index)] = result.strip()
         except FileNotFoundError:
             pass
 
-        # update with new empty anime info as some "Too Many Requests" either find anime and don't show up or 404
-        with open(EMPTY_URL_LOG_TEMP) as no_hit_file:
-            lines = no_hit_file.readlines()
-            for line in lines:
-                if line:
-                    empty_index_lines_dict[line] = None
-
-        empty_index_lines = []
-        for key in empty_index_lines_dict:
-            empty_index_lines.append(key)
-
-        empty_index_lines.sort(key=lambda x: float(x.split(' - ')[0].strip()))  # sort this numerically
+        # update with results from run
+        try:
+            with open(INDEX_LIST_TEMP) as no_hit_file:
+                lines = no_hit_file.readlines()
+                for line in lines:
+                    index, result = line.split('-')
+                    index_results[int(index)] = result.strip()
+            os.remove(INDEX_LIST_TEMP)
+        except FileNotFoundError:
+            pass
 
         # rewrite the global empty mal url log file
-        with open(EMPTY_URL_LOG, 'w') as no_hit_file:
-            no_hit_file.writelines(empty_index_lines)
+        with open(INDEX_LIST, 'w') as no_hit_file:
+            no_hit_file.writelines(["{} - {}\n".format(key, value) for key, value in index_results.items()])
 
-        os.remove(EMPTY_URL_LOG_TEMP)
     else:
-        print('No indexes to search. Your files are up to date!')
+        # create a file to to signify that we are done updating and cleanup files
+        with open(".completed", "w") as _:
+            print('No indexes to search. Your files are up to date!')
+
+        # cleanup files
+        try:
+            os.remove(INDEX_LIST)
+        except FileNotFoundError:
+            pass
+
+
+def run_until_complete():
+    try:
+        os.remove('.completed')
+    except FileNotFoundError:
+        pass
+
+    i = 1
+    while not os.path.isfile('.completed'):
+        print('Iteration:', i)
+        print('-------------')
+        log_anime_from_mal()
+        time.sleep(60)  # wait a minute after completing to let MAL refresh
 
 
 if __name__ == '__main__':
-    log_anime_from_mal()
+    if os.path.isfile('.completed'):
+        ans = ''
+        try:
+            while ans not in ('yes', 'no', 'y', 'n'):
+                ans = input("Would you like to wipe the results and populate them again? ").lower().strip()
+                if ans in ('yes', 'y'):
+                    for path in path_list:
+                        shutil.rmtree(path)
+                    run_until_complete()
+                    break
+                elif ans in ('no', 'n'):
+                    print('Exiting...')
+                    sys.exit(0)
+                else:
+                    print('Please type "y/n"')
+        except KeyboardInterrupt:
+            sys.exit(-1)
+    else:
+        run_until_complete()
