@@ -114,7 +114,7 @@ def search_and_write(list_indexes, index_list):
                 year = date_items[0]
 
             # Print a small snippet of info so the user knows that the program is still running.
-            print('Index: ' + str(i) + ' - ' + filter_title(title) + ' - ' + source)
+            print('Index: ' + str(i) + ' - ' + filter_title(title) + ' [' + source + ']')
 
             # Write the data, but make sure to encode using 'utf-8' otherwise special characters are represented as more
             # than one space. (e.g ä will be taken as 2 spaces since it's base value is \xc3\xa4.
@@ -136,11 +136,10 @@ def search_and_write(list_indexes, index_list):
             did_work = True
 
         except urllib.error.HTTPError as e:
-            error_name = str(e)
-            error_message = str(i) + ' - ' + error_name.replace('HTTP Error ', '')
+            error_message = str(i) + ' - ' + str(e).replace('HTTP Error ', '')
             with open(index_list, 'a+') as empty_urls:
                 empty_urls.write(error_message + '\n')
-            print('Index:', error_message)
+            print('Index: ' + error_message)
             did_work = True
         except urllib.error.URLError:
             pass

@@ -1,5 +1,6 @@
 # Collects anime data from individual MAL Pages and sorts them into files based on Source, Month, and Date of release.
 
+import datetime
 from collections import OrderedDict
 import errno
 import os
@@ -27,12 +28,7 @@ def get_relevant_indexes():
             indexes = no_hit_file.readlines()
         for line in indexes:
             if line.strip() and '404:' not in line and '200:' not in line:
-                indexes_to_search.append(line.split()[0])
-
-        last_index = int(indexes[-1].split()[0])
-        if MAX_URL_INDEX > last_index:
-            indexes_to_search += list(range(last_index + 1, MAX_URL_INDEX + 1))
-        return indexes_to_search
+                indexes_to_search.append(int(line.split()[0]))
     else:
         return range(1, MAX_URL_INDEX + 1)
 
@@ -186,12 +182,28 @@ def run_until_complete():
     except FileNotFoundError:
         pass
 
+    start_time = time.perf_counter()
     i = 1
     while not os.path.isfile('.completed'):
+        print('------------')
         print('Iteration:', i)
-        print('-------------')
+        print('------------')
         log_anime_from_mal()
+        print('')
+        print('Waiting 1 min before starting next iteration')
+        print('')
         time.sleep(60)  # wait a minute after completing to let MAL refresh
+        i += 1
+
+    end_time = time.perf_counter()
+    sec = datetime.timedelta(seconds=end_time-start_time)
+    d = datetime.datetime(1, 1, 1) + sec
+
+    print('Completion Time: %d Day(s) - %d Hour(s) - %d Minute(s) - %d Second(s)' % (d.day-1,
+                                                                                     d.hour,
+                                                                                     d.minute,
+                                                                                     d.second))
+    print('Iterations Required: %d' % i)
 
 
 if __name__ == '__main__':
