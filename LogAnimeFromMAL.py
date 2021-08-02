@@ -14,8 +14,8 @@ SOURCE_PATH = os.path.join('.', 'Anime By Source')
 MONTH_PATH = os.path.join('.', 'Anime By Month')
 DAY_PATH = os.path.join('.', 'Anime By Day')
 path_list = [SOURCE_PATH, MONTH_PATH, DAY_PATH]
-MAX_URL_INDEX = 46704
-# MAX_URL_INDEX = 200  # for testing
+MAX_URL_INDEX = 50000
+# MAX_URL_INDEX = 25  # for testing
 
 INDEX_LIST_TEMP = 'index_list.temp'
 INDEX_LIST = 'index_list.txt'
@@ -29,6 +29,7 @@ def get_relevant_indexes():
         for line in indexes:
             if line.strip() and '404:' not in line and '200:' not in line:
                 indexes_to_search.append(int(line.split()[0]))
+        return indexes_to_search
     else:
         return range(1, MAX_URL_INDEX + 1)
 
@@ -36,7 +37,6 @@ def get_relevant_indexes():
 # Deletes existing files where we want to store our information, grabs the info from MAL, then organizes it in a human
 # readable way.
 def log_anime_from_mal():
-
     # Create the folder(s) for for text files to go into if it doesn't exist already
     for path in path_list:
         try:
@@ -53,9 +53,11 @@ def log_anime_from_mal():
                     os.remove(entry.path)
 
     # Do the actual work of pulling info from web and logging it.
+    search_and_write_failed = False
     try:
         did_work = search_and_write(get_relevant_indexes(), INDEX_LIST_TEMP)
     except:
+        search_and_write_failed = True
         # if failed for some reason just proceed like you finished.
         did_work = True
 
@@ -164,6 +166,8 @@ def log_anime_from_mal():
         with open(INDEX_LIST, 'w') as no_hit_file:
             no_hit_file.writelines(["{} - {}\n".format(key, value) for key, value in index_results.items()])
 
+        return search_and_write_failed
+
     else:
         # create a file to to signify that we are done updating and cleanup files
         with open(".completed", "w") as _:
@@ -183,27 +187,42 @@ def run_until_complete():
         pass
 
     start_time = time.perf_counter()
-    i = 1
+    i = 0
+    failed_run_counter = 0
     while not os.path.isfile('.completed'):
+        if failed_run_counter > 2:
+            print('')
+            print('Internal Process Failed 3 times in a row. Ending Process')
+            break
+
+        if i > 0:
+            print('')
+            print('Waiting 1 min before starting next iteration')
+            print('')
+            time.sleep(60)  # wait a minute after completing to let MAL refresh
+
         print('------------')
-        print('Iteration:', i)
+        print('Iteration:', i + 1)
         print('------------')
-        log_anime_from_mal()
-        print('')
-        print('Waiting 1 min before starting next iteration')
-        print('')
-        time.sleep(60)  # wait a minute after completing to let MAL refresh
+        failed_run = log_anime_from_mal()
+        if failed_run:
+            failed_run_counter += 1
+            print('Search and Write Failed Unexpectedly on iteration:', i)
+        else:
+            failed_run_counter = 0
         i += 1
 
-    end_time = time.perf_counter()
-    sec = datetime.timedelta(seconds=end_time-start_time)
-    d = datetime.datetime(1, 1, 1) + sec
+    if failed_run_counter <= 2:
+        end_time = time.perf_counter()
+        sec = datetime.timedelta(seconds=end_time-start_time)
+        d = datetime.datetime(1, 1, 1) + sec
 
-    print('Completion Time: %d Day(s) - %d Hour(s) - %d Minute(s) - %d Second(s)' % (d.day-1,
-                                                                                     d.hour,
-                                                                                     d.minute,
-                                                                                     d.second))
-    print('Iterations Required: %d' % i)
+        print('')
+        print('Completion Time: %d Day(s) - %d Hour(s) - %d Minute(s) - %d Second(s)' % (d.day-1,
+                                                                                         d.hour,
+                                                                                         d.minute,
+                                                                                         d.second))
+        print('Iterations Required: %d' % i)
 
 
 if __name__ == '__main__':

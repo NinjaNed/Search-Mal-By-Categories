@@ -46,7 +46,6 @@ DAY_PATH = os.path.join('.', 'Anime By Day')
 # Takes a range of indexes to check over the MAL DB, reads the webpage, scans for important data, and writes to disk
 # based on type of source material.
 def search_and_write(list_indexes, index_list):
-
     did_work = False
 
     # For each page that exists. Find the relevant data and store that in the text file corresponding to the source and
