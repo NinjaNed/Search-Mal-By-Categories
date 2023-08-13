@@ -6,7 +6,7 @@ import urllib.error
 # is the last url index. Does make the assumption that no page exists past 40000, which is true now, but possibly not in
 # the future.
 def find_highest_mal_url_index():
-    upper_bound = 50000
+    upper_bound = 60000
     base_url = "https://myanimelist.net/anime/"
     for i in range(upper_bound):
         try:

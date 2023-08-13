@@ -2,8 +2,9 @@ import urllib.request
 import urllib.error
 import os
 import json
+import time
 
-jikan_base_url = 'https://api.jikan.moe/v3/anime/'
+jikan_base_url = 'https://api.jikan.moe/v4/anime/'
 mal_base_url = 'https://myanimelist.net/anime/'
 
 # Anime Titles sometimes use ridiculous symbols ¯\_(ツ)_/¯
@@ -52,13 +53,13 @@ def search_and_write(list_indexes, index_list):
     # connect each one with a === for easy splitting and filtering after all the data is logged.
     for i in list_indexes:
         try:
-
             jikan_url = jikan_base_url + str(i)
             mal_url = mal_base_url + str(i)
 
             with urllib.request.urlopen(jikan_url) as url:
                 data = json.loads(url.read().decode())
 
+            data = data['data']
             title = data['title']
 
             source = data['source']
@@ -84,8 +85,12 @@ def search_and_write(list_indexes, index_list):
             else:
                 num_eps = 'Ongoing'
 
+            list_of_genres = data['genres'] + data['themes'] + data['explicit_genres'] + data['demographics']
+            list_of_genres = sorted(list_of_genres, key=lambda genre : genre['name'])
+
             genres = ''
-            for genre in data['genres']:
+
+            for genre in list_of_genres:
                 genre_name = genre['name']
                 if genres:
                     genres += ', %s' % genre_name
