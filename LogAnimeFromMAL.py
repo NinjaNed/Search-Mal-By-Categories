@@ -14,8 +14,8 @@ SOURCE_PATH = os.path.join('.', 'Anime By Source')
 MONTH_PATH = os.path.join('.', 'Anime By Month')
 DAY_PATH = os.path.join('.', 'Anime By Day')
 path_list = [SOURCE_PATH, MONTH_PATH, DAY_PATH]
-MAX_URL_INDEX = 50000
-# MAX_URL_INDEX = 25  # for testing
+MAX_URL_INDEX = 60000
+# MAX_URL_INDEX = 50  # for testing
 
 INDEX_LIST_TEMP = 'index_list.temp'
 INDEX_LIST = 'index_list.txt'
